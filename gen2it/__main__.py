@@ -56,7 +56,12 @@ def extract_declarations(stm, out, rename=None):
                     for d in new_decls
                     if d.initializer])
             elif isinstance(x, Name):
-                return Name(self.rename.get(x.value, x.value))
+                n = x.value
+                if "." in n:
+                    # I think this might be a bug in the parser...?
+                    idx = n.rindex(".")
+                    return self.visit(FieldAccess(target=Name(n[:idx]), name=n[idx+1:]))
+                return Name(self.rename.get(n, n))
             elif isinstance(x, ForEach):
                 assert not x.variable.dimensions
                 assert isinstance(x.type, Type)
