@@ -144,6 +144,10 @@ def enumerate_conts(stm):
     else:
         raise NotImplementedError(type(stm))
 
+def die(msg):
+    print(msg, file=sys.stderr)
+    sys.exit(1)
+
 def go(in_f, out_f):
     parser = JavaParser()
     print("Parsing...")
@@ -159,11 +163,19 @@ def go(in_f, out_f):
 
     print("Finding 'generate' function...")
     clazz = ast.type_declarations[0]
+    decls_to_keep = []
+    stm = None
     for decl in clazz.body:
         if isinstance(decl, MethodDeclaration) and decl.name == "generate":
+            if stm is not None:
+                die("found duplicate generate() method")
             generated_type = decl.return_type
             args = decl.parameters
             stm = Block(decl.body)
+        else:
+            decls_to_keep.append(decl)
+    if stm is None:
+        die("found no generate() method")
 
     print("Extracting declarations...")
     decls = []
@@ -228,6 +240,7 @@ def go(in_f, out_f):
                 extends=clazz.extends,
                 implements=clazz.implements,
                 body=
+                    decls_to_keep +
                     [FieldDeclaration(a.type, [VariableDeclarator(a.variable)], modifiers=["private"]) for a in args] +
                     [FieldDeclaration(d.type, [VariableDeclarator(v.variable) for v in d.variable_declarators], ["private"] + d.modifiers) for d in decls] +
                     [_hn, _next, _state] +
