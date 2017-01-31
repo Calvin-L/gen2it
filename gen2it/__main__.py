@@ -181,7 +181,9 @@ def go(in_f, out_f):
         clazz.name,
         modifiers=["public"],
         parameters=args,
-        block=[Assignment(operator="=", lhs=FieldAccess(target="this", name=a.variable.name), rhs=Name(a.variable.name)) for a in args])
+        block=
+            [Assignment(operator="=", lhs=FieldAccess(target="this", name=a.variable.name), rhs=Name(a.variable.name)) for a in args] +
+            [MethodInvocation("advance", [])])
 
     has_next = MethodDeclaration(
         "hasNext",
