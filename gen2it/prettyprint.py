@@ -26,6 +26,7 @@ def dump(ast, out, indent="", as_stm=False):
         for t in ast.type_declarations:
             dump(t, out)
     elif isinstance(ast, ClassDeclaration):
+        out(indent)
         for m in ast.modifiers:
             out(m)
             out(" ")
@@ -38,12 +39,15 @@ def dump(ast, out, indent="", as_stm=False):
             dump_seq(ast.implements, out, sep=", ")
         out(" {\n")
         dump_seq(ast.body, out, indent=INDENT+indent)
+        out(indent)
         out("}\n")
     elif isinstance(ast, Name):
         out(ast.value)
     elif isinstance(ast, Type):
         dump(ast.name, out)
-        if ast.type_arguments:
+        if ast.type_arguments == "diamond":
+            out("<>")
+        elif ast.type_arguments:
             out("<")
             dump_seq(ast.type_arguments, out, sep=", ")
             out(">")
@@ -158,11 +162,11 @@ def dump(ast, out, indent="", as_stm=False):
         out(indent)
         out("if (")
         dump(ast.predicate, out)
-        out(") ")
+        out(")\n")
         dump(ast.if_true, out, indent=indent, as_stm=True)
         if ast.if_false:
             out(indent)
-            out("else ")
+            out("else\n")
             dump(ast.if_false, out, indent=indent, as_stm=True)
     elif isinstance(ast, Empty):
         return
@@ -170,7 +174,7 @@ def dump(ast, out, indent="", as_stm=False):
         out(indent)
         out("while (")
         dump(ast.predicate, out)
-        out(") ")
+        out(")\n")
         dump(ast.body, out, indent=indent, as_stm=True)
     elif isinstance(ast, BinaryExpression):
         out("(")
@@ -179,6 +183,11 @@ def dump(ast, out, indent="", as_stm=False):
         out(ast.operator)
         out(" ")
         dump(ast.rhs, out)
+        out(")")
+    elif isinstance(ast, Unary):
+        out("(")
+        out(ast.sign)
+        dump(ast.expression, out)
         out(")")
     elif isinstance(ast, Switch):
         out(indent)
@@ -198,5 +207,14 @@ def dump(ast, out, indent="", as_stm=False):
             dump_seq(branch.body, out, indent=INDENT*2+indent, as_stm=True)
         out(indent)
         out("}\n")
+    elif isinstance(ast, InstanceCreation):
+        assert not ast.enclosed_in
+        assert not ast.type_arguments
+        assert not ast.body
+        out("new ")
+        dump(ast.type, out)
+        out("(")
+        dump_seq(ast.arguments, out, sep=", ")
+        out(")")
     else:
-        raise NotImplementedError(type(ast))
+        raise NotImplementedError(ast)
