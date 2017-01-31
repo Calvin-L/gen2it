@@ -186,9 +186,9 @@ def go(in_f, out_f):
     stm.accept(YieldNumberer())
 
     print("Constructing iterator...")
-    _hn = FieldDeclaration(type="boolean", variable_declarators=[VariableDeclarator(Variable(fresh_name()), Literal("false"))])
-    _next = FieldDeclaration(type=generated_type, variable_declarators=[VariableDeclarator(Variable(fresh_name()), Literal("null"))])
-    _state = FieldDeclaration(type="int", variable_declarators=[VariableDeclarator(Variable(fresh_name()), Literal("0"))])
+    _hn    = FieldDeclaration(modifiers=["private"], type="boolean", variable_declarators=[VariableDeclarator(Variable(fresh_name()), Literal("false"))])
+    _next  = FieldDeclaration(modifiers=["private"], type=generated_type, variable_declarators=[VariableDeclarator(Variable(fresh_name()), Literal("null"))])
+    _state = FieldDeclaration(modifiers=["private"], type="int", variable_declarators=[VariableDeclarator(Variable(fresh_name()), Literal("0"))])
 
     _hn_var = Name(_hn.variable_declarators[0].variable.name)
     _next_var = Name(_next.variable_declarators[0].variable.name)
