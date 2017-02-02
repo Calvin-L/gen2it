@@ -108,8 +108,14 @@ def run_to_first_yield(stm, has_next_var, next_var, state_var, k=None):
                     Return()])
             if isinstance(x, While):
                 new_body = self.visit(x.body)
-                self.dead = self.dead and x.predicate == Literal("true")
-                return While(x.predicate, new_body)
+                if self.dead:
+                    if x.predicate == Literal("true"):
+                        return new_body
+                    self.dead = False
+                    return IfThenElse(x.predicate, new_body)
+                else:
+                    self.dead = False
+                    return While(x.predicate, new_body)
             if isinstance(x, IfThenElse):
                 new_then = self.visit(x.if_true)
                 d1 = self.dead
