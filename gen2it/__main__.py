@@ -71,7 +71,7 @@ def extract_declarations(stm, out, rename=None):
                 it_t = Type("java.util.Iterator", [t])
                 return self.visit(Block([
                     VariableDeclaration(t, [VariableDeclarator(Variable(v.value, 0))]),
-                    VariableDeclaration(it_t, [VariableDeclarator(Variable(it.value, 0))]),
+                    VariableDeclaration(it_t, [VariableDeclarator(Variable(it.value, 0), MethodInvocation(target=x.iterable, name="iterator"))]),
                     While(MethodInvocation(target=it, name="hasNext"), Block([
                         Assignment(operator="=", lhs=v, rhs=MethodInvocation(target=it, name="next")),
                         x.body]))]))
