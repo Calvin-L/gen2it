@@ -83,7 +83,7 @@ def extract_declarations(stm, out, rename=None):
 class YieldNumberer(Visitor):
     def __init__(self):
         super().__init__(verbose=False)
-        self.n = 1
+        self.n = 0
     def visit_MethodInvocation(self, m):
         if m.name == "yield" and not m.target:
             m.number = self.n
@@ -104,7 +104,7 @@ def run_to_first_yield(stm, has_next_var, next_var, state_var, k=None):
                 return Block([
                     Assignment(operator="=", lhs=has_next_var, rhs=Literal("true")),
                     Assignment(operator="=", lhs=next_var,     rhs=x.arguments[0]),
-                    Assignment(operator="=", lhs=state_var,    rhs=Literal(str(x.number))),
+                    Assignment(operator="=", lhs=state_var,    rhs=Literal(str(x.number))) if state_var else Empty(),
                     Return()])
             if isinstance(x, While):
                 new_body = self.visit(x.body)
@@ -198,7 +198,8 @@ def go(in_f, out_f):
 
     _hn_var = Name(_hn.variable_declarators[0].variable.name)
     _next_var = Name(_next.variable_declarators[0].variable.name)
-    _state_var = Name(_state.variable_declarators[0].variable.name)
+    conts = list(enumerate_conts(stm))
+    _state_var = Name(_state.variable_declarators[0].variable.name) if len(conts) > 1 else None
 
     init = ConstructorDeclaration(
         clazz.name,
@@ -206,7 +207,7 @@ def go(in_f, out_f):
         parameters=args,
         block=
             [Assignment(operator="=", lhs=FieldAccess(target="this", name=a.variable.name), rhs=Name(a.variable.name)) for a in args] +
-            [MethodInvocation("advance", [])])
+            run_to_first_yield(stm, _hn_var, _next_var, _state_var, k=Break()))
 
     has_next = MethodDeclaration(
         "hasNext",
@@ -232,9 +233,10 @@ def go(in_f, out_f):
         parameters=[],
         return_type="void",
         body=[Assignment(operator="=", lhs=_hn_var, rhs=Literal("false")),
-            Switch(_state_var,
-                [SwitchCase([Literal("0")], run_to_first_yield(stm, _hn_var, _next_var, _state_var, k=Break()))] +
-                [SwitchCase([Literal(str(i))], run_to_first_yield(k, _hn_var, _next_var, _state_var, k=Break())) for (i, k) in enumerate_conts(stm)])])
+            Switch(_state_var, [SwitchCase([Literal(str(i))], run_to_first_yield(k, _hn_var, _next_var, _state_var, k=Break())) for (i, k) in conts])
+                if _state_var else
+                Block(run_to_first_yield(conts[0][1], _hn_var, _next_var, _state_var, k=Empty())) if conts else
+                Empty()])
 
     it = CompilationUnit(
         package_declaration=ast.package_declaration,
@@ -249,7 +251,7 @@ def go(in_f, out_f):
                     decls_to_keep +
                     [FieldDeclaration(a.type, [VariableDeclarator(a.variable)], modifiers=["private"]) for a in args] +
                     [FieldDeclaration(d.type, [VariableDeclarator(v.variable) for v in d.variable_declarators], ["private"] + d.modifiers) for d in decls] +
-                    [_hn, _next, _state] +
+                    [_hn, _next] + ([_state] if _state_var else []) +
                     [init, has_next, get_next, advance])])
 
     # print(it)
