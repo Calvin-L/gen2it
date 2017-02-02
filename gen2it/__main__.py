@@ -90,6 +90,8 @@ class YieldNumberer(Visitor):
             self.n += 1
 
 def run_to_first_yield(stm, has_next_var, next_var, state_var, k=None):
+    if k is None:
+        k = Empty()
     class R(Rewriter):
         def __init__(self):
             super().__init__()
@@ -207,7 +209,7 @@ def go(in_f, out_f):
         parameters=args,
         block=
             [Assignment(operator="=", lhs=FieldAccess(target="this", name=a.variable.name), rhs=Name(a.variable.name)) for a in args] +
-            run_to_first_yield(stm, _hn_var, _next_var, _state_var, k=Break()))
+            run_to_first_yield(stm, _hn_var, _next_var, _state_var))
 
     has_next = MethodDeclaration(
         "hasNext",
@@ -235,7 +237,7 @@ def go(in_f, out_f):
         body=[Assignment(operator="=", lhs=_hn_var, rhs=Literal("false")),
             Switch(_state_var, [SwitchCase([Literal(str(i))], run_to_first_yield(k, _hn_var, _next_var, _state_var, k=Break())) for (i, k) in conts])
                 if _state_var else
-                Block(run_to_first_yield(conts[0][1], _hn_var, _next_var, _state_var, k=Empty())) if conts else
+                Block(run_to_first_yield(conts[0][1], _hn_var, _next_var, _state_var)) if conts else
                 Empty()])
 
     it = CompilationUnit(
