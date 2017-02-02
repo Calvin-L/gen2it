@@ -32,7 +32,10 @@ def dump(ast, out, indent="", as_stm=False):
             out(" ")
         out("class ")
         out(ast.name)
-        assert not ast.type_parameters
+        if ast.type_parameters:
+            out("<")
+            dump_seq(ast.type_parameters, out, sep=", ")
+            out(">")
         assert not ast.extends
         if ast.implements:
             out(" implements ")
@@ -53,6 +56,11 @@ def dump(ast, out, indent="", as_stm=False):
             out(">")
         assert not ast.enclosed_in
         assert not ast.dimensions
+    elif isinstance(ast, TypeParameter):
+        out(ast.name)
+        if ast.extends:
+            out(" extends ")
+            dump_seq(ast.extends, out, sep=" & ")
     elif isinstance(ast, FieldDeclaration):
         out(indent)
         for m in ast.modifiers:
