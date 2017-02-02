@@ -229,7 +229,7 @@ def go(in_f, out_f):
 
     advance = MethodDeclaration(
         "advance",
-        modifiers=["public"],
+        modifiers=["private"],
         parameters=[],
         return_type="void",
         body=[Assignment(operator="=", lhs=_hn_var, rhs=Literal("false")),
